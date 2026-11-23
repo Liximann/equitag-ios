@@ -14,17 +14,31 @@ workflows:
     scripts:
       - name: Xcode-Projekt erzeugen
         script: |
+          set -euo pipefail
           brew install xcodegen
           export BUILD_NUMBER=${BUILD_NUMBER:-1}
           xcodegen generate
       - name: Signierung vorbereiten
         script: |
+          set -euo pipefail
+          # Schlüssel akzeptieren: einzeilig (Base64) oder als PEM-Text
+          if echo "$CERTIFICATE_PRIVATE_KEY" | grep -q "BEGIN"; then
+            KEY="$CERTIFICATE_PRIVATE_KEY"
+          else
+            KEY="$(echo "$CERTIFICATE_PRIVATE_KEY" | tr -d ' \n\r' | base64 --decode)"
+          fi
+          if ! echo "$KEY" | grep -q "BEGIN RSA PRIVATE KEY"; then
+            echo "FEHLER: CERTIFICATE_PRIVATE_KEY ist ungültig. Bitte den einzeiligen Schlüssel neu einfügen."
+            exit 1
+          fi
+          export CERTIFICATE_PRIVATE_KEY="$KEY"
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles
       - name: App bauen
         script: |
+          set -euo pipefail
           xcode-project build-ipa --project "EquiTag.xcodeproj" --scheme "EquiTag"
     artifacts:
       - build/ios/ipa/*.ipa
