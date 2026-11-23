@@ -1,0 +1,44 @@
+name: EquiTag
+options:
+  bundleIdPrefix: de.equitag
+  deploymentTarget:
+    iOS: "15.0"
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "${BUILD_NUMBER}"
+    SWIFT_VERSION: "5.0"
+targets:
+  EquiTag:
+    type: application
+    platform: iOS
+    sources:
+      - EquiTag
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.equitag.app
+        PRODUCT_NAME: EquiTag
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: EquiTag/Info.plist
+      properties:
+        CFBundleDisplayName: EquiTag
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleDevelopmentRegion: de
+        CFBundleAllowMixedLocalizations: true
+        CFBundleLocalizations: [de, en, es, it, nl, fr, ar]
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        NFCReaderUsageDescription: "EquiTag überträgt Kopfnummern per NFC auf E-Ink-Displays."
+        com.apple.developer.nfc.readersession.iso7816.select-identifiers:
+          - D2760000850101
+    entitlements:
+      path: EquiTag/EquiTag.entitlements
+      properties:
+        com.apple.developer.nfc.readersession.formats:
+          - TAG
+    scheme: {}
