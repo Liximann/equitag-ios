@@ -83,5 +83,7 @@ enum I18n {
         "transfer": ["Übertragen", "Transfer", "Transferir", "Trasferisci", "Overzetten", "Transférer", "نقل"],
         "transfer_title": ["Übertragen: %@", "Transfer: %@", "Transferir: %@", "Trasferisci: %@", "Overzetten: %@", "Transférer : %@", "نقل: %@"],
         "version": ["Version", "Version", "Versión", "Versione", "Versie", "Version", "الإصدار"],
+        "ws27": ["Altes Waveshare-2,7\"-Display", "Old Waveshare 2.7\" display", "Pantalla Waveshare 2,7\" antigua", "Vecchio display Waveshare 2,7\"", "Oud Waveshare 2,7\"-display", "Ancien écran Waveshare 2,7\"", "شاشة Waveshare القديمة 2.7 بوصة"],
+        "ws27_desc": ["Nur für das 2,7\"-Display von Waveshare einschalten. Für 3,52\"-Displays ausgeschaltet lassen.", "Only turn on for the Waveshare 2.7\" display. Leave off for 3.52\" displays.", "Actívalo solo para la pantalla Waveshare de 2,7\". Déjalo desactivado para pantallas de 3,52\".", "Attivalo solo per il display Waveshare da 2,7\". Lascialo disattivato per i display da 3,52\".", "Alleen aanzetten voor het Waveshare 2,7\"-display. Uit laten voor 3,52\"-displays.", "À activer uniquement pour l'écran Waveshare 2,7\". Laisser désactivé pour les écrans 3,52\".", "فعّله فقط لشاشة Waveshare مقاس 2.7 بوصة. اتركه متوقفاً لشاشات 3.52 بوصة."],
     ]
 }

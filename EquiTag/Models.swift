@@ -19,6 +19,9 @@ final class HorseStore: ObservableObject {
     @Published var invert: Bool {
         didSet { UserDefaults.standard.set(invert, forKey: "invert") }
     }
+    @Published var waveshare27: Bool {
+        didSet { UserDefaults.standard.set(waveshare27, forKey: "ws27") }
+    }
     @Published var language: String {
         didSet {
             UserDefaults.standard.set(language, forKey: "language")
@@ -35,6 +38,7 @@ final class HorseStore: ObservableObject {
         horses = list
         rotate180 = d.bool(forKey: "rotate180")
         invert = d.bool(forKey: "invert")
+        waveshare27 = d.bool(forKey: "ws27")
         let lang = I18n.resolve(d.string(forKey: "language") ?? "")
         language = lang
         I18n.setLanguage(lang)

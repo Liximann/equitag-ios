@@ -103,7 +103,8 @@ struct ContentView: View {
     }
 
     private func transfer(_ horse: Horse) {
-        NFCManager.shared.start(horse: horse, rotate180: store.rotate180, invert: store.invert) { error in
+        NFCManager.shared.start(horse: horse, rotate180: store.rotate180, invert: store.invert,
+                                waveshare27: store.waveshare27) { error in
             if let error = error {
                 errorMessage = error.message
                 showError = true
@@ -236,6 +237,9 @@ struct SettingsView: View {
                 }
                 Section(footer: Text(I18n.t("invert_desc"))) {
                     Toggle(I18n.t("invert"), isOn: $store.invert)
+                }
+                Section(footer: Text(I18n.t("ws27_desc"))) {
+                    Toggle(I18n.t("ws27"), isOn: $store.waveshare27)
                 }
                 Section(header: Text(I18n.t("help_title"))) {
                     Text(I18n.t("help_text")).font(.footnote)

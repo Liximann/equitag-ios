@@ -60,12 +60,13 @@ final class NFCManager: NSObject, NFCTagReaderSessionDelegate {
     private var horse: Horse?
     private var rotate180 = false
     private var invert = false
+    private var waveshare27 = false
     private var finished = true
     private var onFinish: ((WriteError?) -> Void)?
     private let work = DispatchQueue(label: "de.equitag.transfer")
 
     /// onFinish: nil = erfolgreich oder abgebrochen, sonst Fehler.
-    func start(horse: Horse, rotate180: Bool, invert: Bool, onFinish: @escaping (WriteError?) -> Void) {
+    func start(horse: Horse, rotate180: Bool, invert: Bool, waveshare27: Bool, onFinish: @escaping (WriteError?) -> Void) {
         guard NFCTagReaderSession.readingAvailable else {
             onFinish(WriteError("nfc_unavailable"))
             return
@@ -73,6 +74,7 @@ final class NFCManager: NSObject, NFCTagReaderSessionDelegate {
         self.horse = horse
         self.rotate180 = rotate180
         self.invert = invert
+        self.waveshare27 = waveshare27
         self.onFinish = onFinish
         finished = false
 
@@ -109,13 +111,16 @@ final class NFCManager: NSObject, NFCTagReaderSessionDelegate {
     func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         guard let tag = tags.first else { return }
         let channel: APDUChannel
+        let hist: [UInt8]
         switch tag {
         case .iso7816(let t):
             channel = ISO7816Channel(t)
+            hist = [UInt8](t.historicalBytes ?? Data())
             TransferLog.add("tag iso7816 id=\(toHex([UInt8](t.identifier))) aid=\(t.initialSelectedAID)"
                 + " hist=\(toHex([UInt8](t.historicalBytes ?? Data())))")
         case .miFare(let t):
             channel = MiFareChannel(t)
+            hist = [UInt8](t.historicalBytes ?? Data())
             TransferLog.add("tag mifare family=\(t.mifareFamily.rawValue) id=\(toHex([UInt8](t.identifier)))"
                 + " hist=\(toHex([UInt8](t.historicalBytes ?? Data())))")
         default:
@@ -131,23 +136,45 @@ final class NFCManager: NSObject, NFCTagReaderSessionDelegate {
                 return
             }
             session.alertMessage = I18n.t("tag_found")
-            self.work.async { self.transfer(session, channel) }
+            self.work.async { self.transfer(session, channel, hist) }
         }
     }
 
     // MARK: Übertragung
 
-    private func transfer(_ session: NFCTagReaderSession, _ channel: APDUChannel) {
+    private func transfer(_ session: NFCTagReaderSession, _ channel: APDUChannel, _ hist: [UInt8]) {
         guard let horse = horse else { return }
         let rotate = rotate180
         let inv = invert
-        let transfer = FmshTransfer(channel: channel) { percent, key in
+        let progress: (Int, String) -> Void = { percent, key in
             session.alertMessage = "\(I18n.t(key))  \(percent) %"
         }
+        func image(_ width: Int, _ height: Int) -> [Bool] {
+            LabelRenderer.toDevice(number: horse.number, name: horse.name, devW: width, devH: height,
+                                   rotate180: rotate, invert: inv)
+        }
+        let isYzrcos = String(decoding: hist, as: UTF8.self).contains("YZRCOS")
         do {
-            try transfer.run { width, height in
-                LabelRenderer.toDevice(number: horse.number, name: horse.name, devW: width, devH: height,
-                                       rotate180: rotate, invert: inv)
+            if isYzrcos {
+                let waveshare = WaveshareTransfer(channel: channel, progress: progress)
+                if waveshare27 {
+                    TransferLog.add("YZRCOS, Einstellung: Waveshare 2.7in")
+                    try waveshare.write(image(WaveshareTransfer.memW, WaveshareTransfer.memH))
+                } else {
+                    let hipo = HipoTransfer(channel: channel, progress: progress)
+                    do {
+                        try hipo.unlock()
+                        TransferLog.add("Hipoink 3.52in 360x240")
+                        progress(2, "stage_connected")
+                        try hipo.write(image(HipoTransfer.width, HipoTransfer.height))
+                    } catch is HipoTransfer.NotHipo {
+                        TransferLog.add("kein Hipoink -> Waveshare 2.7in")
+                        try waveshare.write(image(WaveshareTransfer.memW, WaveshareTransfer.memH))
+                    }
+                }
+            } else {
+                let transfer = FmshTransfer(channel: channel, progress: progress)
+                try transfer.run { width, height in image(width, height) }
             }
             session.alertMessage = I18n.t("done")
             finish(nil)
